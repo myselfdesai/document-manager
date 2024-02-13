@@ -2,10 +2,23 @@ from rest_framework import serializers
 
 from ..models import FileVersion, User
 
+
+from rest_framework import serializers
+from ..models import FileVersion
+
+class FileUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
+
+    def create(self, validated_data):
+        return FileVersion.objects.create(
+            user=self.context['request'].user,
+            file=validated_data['file']
+        )
+
 class FileVersionSerializer(serializers.ModelSerializer):
     class Meta:
         model = FileVersion
-        fields = "__all__"
+        fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

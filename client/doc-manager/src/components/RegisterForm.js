@@ -5,21 +5,26 @@ import Button from 'react-bootstrap/Button';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 function RegisterForm({ setLoggedIn }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errorFlag, setErrorFlag] = useState(false);
+  const navigate = useNavigate();
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
     axios.post('http://localhost:8001/register/', { name, email, password })
       .then(() => {
         setLoggedIn(true);
+        //navigate('/login');
+        window.location.href='/login';
       })
       .catch(error => {
-        console.error('Registration error:', error);
+        setErrorFlag(true);
       });
   };
 
@@ -28,6 +33,7 @@ function RegisterForm({ setLoggedIn }) {
       <Row className="justify-content-center">
         <Col md={6}>
           <h2 className="text-center mb-4">Register</h2>
+          {errorFlag && <div className="alert alert-danger">Registraion went wrong try with different email address</div>}
           <Form onSubmit={handleSubmit}>
             <Form.Group controlId="formBasicName">
               <Form.Label>Name</Form.Label>

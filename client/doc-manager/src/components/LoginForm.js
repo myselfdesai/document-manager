@@ -10,20 +10,20 @@ import { Link, useNavigate } from 'react-router-dom';
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errorFlag, setErrorFlag] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const response = await axios.post('http://localhost:8001/login/', { email, password });
-      const token = response.data.token;
-      // Store the token in local storage
-      localStorage.setItem('token', token);
-      // Redirect to files page after successful login
-      navigate('/files');
-    } catch (error) {
-      console.error('Login failed:', error);
-    }
+    axios.post('http://localhost:8001/login/', { email, password })
+      .then((response) => {
+        localStorage.setItem('token', response.data.token);
+        //navigate('/files');
+        window.location.href='/files';
+      })
+      .catch(error => {
+        setErrorFlag(true);
+      });
   };
 
   return (
@@ -31,6 +31,7 @@ function LoginForm() {
       <Row className="justify-content-center">
         <Col md={6}>
           <h2 className="text-center mb-4">Login</h2>
+          {errorFlag && <div className="alert alert-danger">Login Failed please check your credentials</div>}
           <Form onSubmit={handleSubmit}>
             <Form.Group controlId="formBasicEmail">
               <Form.Label>Email address</Form.Label>

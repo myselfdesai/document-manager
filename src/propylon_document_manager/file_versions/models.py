@@ -36,5 +36,14 @@ class User(AbstractUser):
 
 
 class FileVersion(models.Model):
-    file_name = models.fields.CharField(max_length=512)
-    version_number = models.fields.IntegerField()
+    content_hash = models.CharField(max_length=64)
+    file_name = models.CharField(max_length=512)
+    version_number = models.IntegerField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        # Enforce uniqueness for content_hash and user combination
+        unique_together = ('content_hash', 'user')
+
+    def __str__(self):
+        return f"{self.file_name} (Version {self.version_number})"

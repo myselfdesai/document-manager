@@ -1,19 +1,29 @@
 import React from 'react';
 import { Navbar, Container, Button } from 'react-bootstrap';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const CustomNavbar = ({ isLoggedIn, handleLogout }) => {
-
+  const navigate = useNavigate();
+  const token = localStorage.getItem('token');
+  
   const logout = async (e) => {
     e.preventDefault();
     
     // Clear token from local storage
     localStorage.removeItem('token');
     
-    handleLogout();
+    const handleLogout = function (){
+        localStorage.removeItem('token');
+        //navigate("/login");
+        window.location.href='/login';
+    };
 
     try {
-      await axios.post('http://localhost:8001/logout/', null, { withCredentials: true });
+      await axios.post('http://localhost:8001/logout/', null, { headers: {
+        Authorization: `Token ${token}`,
+      }, });
+      handleLogout();
     } catch (error) {
       console.error('Logout request failed:', error);
     }
@@ -28,7 +38,6 @@ const CustomNavbar = ({ isLoggedIn, handleLogout }) => {
           <Navbar.Text>
             {isLoggedIn && (
               <>
-                <span className="text-light mr-3">Welcome to Document Management</span>
                 <Button onClick={logout} variant="secondary">Logout</Button>
               </>
             )}
