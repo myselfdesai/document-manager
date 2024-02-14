@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const FileUploadForm = () => {
+const FileUploadForm = (props) => {
+  const { setUploadingError } = props;
   const [file, setFile] = useState(null);
 
   const handleFileChange = (e) => {
@@ -19,11 +20,17 @@ const FileUploadForm = () => {
           'Content-Type': 'multipart/form-data',
           Authorization: `Token ${token}`,
         },
+      }).then(
+        (response) => {
+          window.location.reload();
+        }
+      ).catch(()=>{
+        setUploadingError('File already exists');
       });
-      console.log('File uploaded successfully:', response.data);
+      
       
     } catch (error) {
-      console.error('Error uploading file:', error);
+      setUploadingError('File already exists');
     }
   };
 

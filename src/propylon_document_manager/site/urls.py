@@ -5,8 +5,7 @@ from django.urls import include, path
 from django.views import defaults as default_views
 from django.views.generic import TemplateView
 from rest_framework.authtoken.views import obtain_auth_token
-from propylon_document_manager.file_versions.api.views import LoginAPIView, LogoutAPIView, RegisterAPIView
-
+from propylon_document_manager.file_versions.api.views import LoginAPIView, LogoutAPIView, RegisterAPIView, FileVersionsViewSet
 
 urlpatterns = [
     # API base url
@@ -17,6 +16,7 @@ urlpatterns = [
     path('login/', LoginAPIView.as_view(), name='login'),
     path('logout/', LogoutAPIView.as_view(), name='logout'),
     path('register/', RegisterAPIView.as_view(), name='register'),
+    path("api/file_versions/<int:pk>/download/", FileVersionsViewSet.as_view({"get": "download"}), name="file-download"),
 ]
 if settings.DEBUG:
     if "debug_toolbar" in settings.INSTALLED_APPS:

@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.http import FileResponse
 
 from rest_framework import viewsets,status, decorators
 from rest_framework.response import Response
@@ -44,7 +45,7 @@ class FileUploadViewSet(viewsets.ViewSet):
             content_hash=hashed_content, user=user, file_name=file.name
         ).first()
         if existing_file:
-            return Response("File already exists")
+            return Response({'message': 'File already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Check if a file with the same filename but different hash exists for the user with max version
         existing_file_different_hash = FileVersion.objects.filter(
@@ -94,6 +95,24 @@ class FileVersionsViewSet(viewsets.ViewSet):
             return Response(serializer.data)
         except FileVersion.DoesNotExist:
             return Response({'message': 'File version not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    def download(self, request, pk=None):
+        user = request.user
+        try:
+            file_version = FileVersion.objects.get(pk=pk, user=user)
+
+            # Construct the media path using file_name and content_hash
+            file_extension = os.path.splitext(file_version.file_name)[-1].lower()
+            media_path = os.path.join(settings.MEDIA_ROOT, 'uploads', f'{file_version.content_hash}{file_extension}')
+
+            if not os.path.exists(media_path):
+                return Response({'error': 'File not found'}, status=status.HTTP_404_NOT_FOUND)
+
+            return FileResponse(open(media_path, 'rb'), as_attachment=True, filename=file_version.file_name)
+
+        except FileVersion.DoesNotExist:
+            return Response({'error': 'File not found'}, status=status.HTTP_404_NOT_FOUND)
+        
 
 
 class LoginAPIView(APIView):
