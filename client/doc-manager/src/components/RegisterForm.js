@@ -7,7 +7,7 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import { Link, useNavigate } from 'react-router-dom';
 
-function RegisterForm({ setLoggedIn }) {
+function RegisterForm() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,9 +19,7 @@ function RegisterForm({ setLoggedIn }) {
     e.preventDefault();
     axios.post('http://localhost:8001/register/', { name, email, password })
       .then(() => {
-        setLoggedIn(true);
-        //navigate('/login');
-        window.location.href='/login';
+        navigate('/login');
       })
       .catch(error => {
         setErrorFlag(true);

@@ -41,6 +41,7 @@ function LoginForm() {
               <Form.Label>Password</Form.Label>
               <Form.Control type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
             </Form.Group>
+            <br></br>
             <Button variant="primary" type="submit" className="w-100 mb-3">
               Login
             </Button>

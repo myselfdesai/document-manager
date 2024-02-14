@@ -43,7 +43,7 @@ class FileVersion(models.Model):
 
     class Meta:
         # Enforce uniqueness for content_hash and user combination
-        unique_together = ('content_hash', 'user')
+        unique_together = ('file_name','content_hash', 'user')
 
     def __str__(self):
         return f"{self.file_name} (Version {self.version_number})"

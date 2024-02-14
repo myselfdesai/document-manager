@@ -6,7 +6,6 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
-from cryptography.hazmat.primitives import hashes
 
 from django.contrib.auth import authenticate, login, logout
 
@@ -14,8 +13,8 @@ from django.conf import settings
 from ..models import FileVersion
 from .serializers import FileVersionSerializer, FileUploadSerializer, UserSerializer
 
-import base64
 import os
+import hashlib
 
 class FileUploadViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
@@ -26,42 +25,56 @@ class FileUploadViewSet(viewsets.ViewSet):
         file = serializer.validated_data['file']
         user = request.user
 
-        # Calculate hash using cryptography
-        digest = hashes.Hash(hashes.SHA256())
-        for chunk in file.chunks():
-            digest.update(chunk)
-        hashed_content = base64.b64encode(digest.finalize()).decode()
+        # Initialize the hash object (SHA-256 in this case)
+        hasher = hashlib.sha256()
 
+        file_content = b""
+        with file.open('rb') as f:
+            # Read the file in chunks to avoid loading the entire file into memory
+            for chunk in iter(lambda: f.read(4096), b""):
+                file_content += chunk
+                # Update the hash with the current chunk
+                hasher.update(chunk)
 
-        # Check if a file with the same hash already exists for the user
+        # Calculate the final hash value
+        hashed_content = hasher.hexdigest()
+
+        # Check if a file with the same filename and hash already exists for the user
         existing_file = FileVersion.objects.filter(
-            content_hash=hashed_content, user=user
+            content_hash=hashed_content, user=user, file_name=file.name
         ).first()
-
         if existing_file:
-            # Create a new version
-            new_version = FileVersion.objects.create(
-                content_hash=hashed_content,
-                file_name=file.name,
-                version_number=existing_file.version_number + 1,
-                user=user,
-            )
-        else:
-            # Create a new file record and first version
-            new_file = FileVersion.objects.create(
-                content_hash=hashed_content,
-                file_name=file.name,
-                version_number=1,
-                user=user,
-            )
+            return Response("File already exists")
 
-            # Store actual file content based on your storage solution (local filesystem)
-            file_path = os.path.join(settings.MEDIA_ROOT, 'uploads/', hashed_content)
-           
-            file_path = os.path.join(settings.MEDIA_ROOT, 'uploads/', os.path.basename(hashed_content))
+        # Check if a file with the same filename but different hash exists for the user with max version
+        existing_file_different_hash = FileVersion.objects.filter(
+            user=user, file_name=file.name
+        ).exclude(content_hash=hashed_content).order_by('-version_number').first()
+
+        if existing_file_different_hash:
+            # File with same filename but different hash exists, create new version
+            new_version_number = existing_file_different_hash.version_number + 1
+        else:
+            # No file with same filename and hash exists, create new file record and first version
+            new_version_number = 1
+
+        new_version = FileVersion.objects.create(
+            content_hash=hashed_content,
+            file_name=file.name,
+            version_number=new_version_number,
+            user=user,
+        )
+        # Get the file extension
+        _, file_extension = os.path.splitext(file.name)
+
+        # Construct the new filename using the hashed content and the original file extension
+        new_filename = hashed_content + file_extension.lower()
+
+        # Store actual file content
+        file_path = os.path.join(settings.MEDIA_ROOT, 'uploads/', new_filename)
+        if not os.path.exists(file_path):
             with open(file_path, 'wb') as destination:
-                for chunk in file.chunks():
-                    destination.write(chunk)
+                destination.write(file_content)
 
         return Response({'message': 'File uploaded and stored successfully'}, status=status.HTTP_201_CREATED)
 

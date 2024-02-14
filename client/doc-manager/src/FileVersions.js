@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import FileUploadForm from './components/FileUploadForm';
+import Table from 'react-bootstrap/Table';
 
 
 const FileVersions = () => {
@@ -33,18 +34,33 @@ const FileVersions = () => {
 
   return (
     <div>
-      <span className="text-light mr-3">Welcome to Document Management</span>
+      <div className='text-center'><h1>Welcome to Document Management</h1></div>
       <br></br>
-      <h1>File Versions</h1>
-      <FileUploadForm onFileUploaded={handleFileUploaded} />
+      <br></br>
+      <div className='text-center'> <FileUploadForm onFileUploaded={handleFileUploaded} /></div>
+      <br></br>
+      <br></br>
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <ul>
-          {fileVersions.map((fileVersion) => (
-            <li key={fileVersion.id}>{fileVersion.file_name}</li>
-          ))}
-        </ul>
+
+        <Table striped bordered hover>
+      <thead>
+        <tr>
+          <th>File Name</th>
+          <th>Versions</th>
+        </tr>
+      </thead>
+      <tbody>
+      {fileVersions.map((fileVersion) => (
+        <tr key={fileVersion.id}>
+          <td>{fileVersion.file_name}</td>
+          <td>{fileVersion.version_number}</td>
+        </tr>
+        ))}
+        </tbody>
+      </Table>
+        
       )}
     </div>
   );
